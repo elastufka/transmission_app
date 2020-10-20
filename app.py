@@ -10,7 +10,7 @@ import numpy as np
 from collections import Counter
 
 app = dash.Dash(__name__)#, external_stylesheets=external_stylesheets)
-
+server = app.server
 #material_names=glob.glob('/data/*.csv')
 #df = pd.read_csv('data/dftrim.csv')
 #dfc=pd.read_csv('data/dfctrim.csv')
