@@ -23,6 +23,20 @@ attenuator_thickness=['1','2']
 detector_materials=['None','CdTe']
 detector_thickness=['1','2']
 
+def count_hist(evec,counts,bins):
+    cdist=[]
+    #print(np.shape(evec),np.shape(counts))
+    for i,b in enumerate(bins[:-1]):
+        #print(b, bins[i+1])
+        eidx=np.where((evec >b) & (evec <bins[i+1]))
+        #print(eidx)
+        csum=0
+        if len(eidx[0] !=0):
+            for j in eidx[0]:
+                csum=csum+counts[j]
+        cdist.append(csum)
+    return cdist
+        
 
 def calc_transmission(a, rho, thickness):
     '''Make this seperate just in case'''
@@ -63,7 +77,7 @@ def get_transm(substrate,sthick,grating,gthick,attenuator,athick,detector,dthick
         try:
             atransm = adata['P(xi) (d='+athick+'000 um)']
         except KeyError:
-            atransm=calc_transmission(adata['a (cm^2/g)'],adata['rho (g/cm^3)'][0],athick)
+            atransm=calc_transmission(adata['a (cm^2/g)'],adata['rho (g/cm^3)'][0],athick*1000)
         transm_dict['aenergy']=aenergy
         transm_dict['atransm']=atransm
     else:
@@ -77,7 +91,7 @@ def get_transm(substrate,sthick,grating,gthick,attenuator,athick,detector,dthick
         try:
             dtransm = ddata['P(xi) (d='+dthick+'000 um)']
         except KeyError:
-            dtransm=calc_transmission(ddata['a (cm^2/g)'],ddata['rho (g/cm^3)'][0],dthick)
+            dtransm=calc_transmission(ddata['a (cm^2/g)'],ddata['rho (g/cm^3)'][0],dthick*1000)
         transm_dict['denergy']=denergy
         transm_dict['dtransm']=1.-dtransm
     else:
@@ -193,6 +207,7 @@ def update_graph(substrate,sthick,gratings,gthick,attenuator,athick,detector,dth
     if detector != 'None':
         fig.add_trace(go.Scatter(x=transm_dict['denergy'], y=transm_dict['dtransm'], name='Detector'))
     fig.add_trace(go.Scatter(x=transm_dict['tenergy'], y=transm_dict['ttransm'], name='Total'))
+    fig.update_layout(yaxis = dict(showexponent = 'all',exponentformat = 'e'))
     fig.update_layout(title='Transmission',yaxis_type = 'log',xaxis_type='log',xaxis_range=[.5,2.5],xaxis_title='Energy (keV)',yaxis_range=[-3,0.1],yaxis_title='Percent Transmission')
     #fig.update_traces(marker=dict(colors=ccolors))
     return fig
@@ -226,12 +241,22 @@ def update_graph(bin_type,substrate,sthick,gratings,gthick,attenuator,athick,det
     thermal_counts= thth*transm_dict['ttransm']
     nonthermal_counts= ntnt*transm_dict['ttransm']
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=dist['Energy'],y=thermal_counts,name='thermal',line= {"shape": 'hv'},
+    if bin_type =='Linear':
+        fig.add_trace(go.Scatter(x=dist['Energy'],y=thermal_counts,name='thermal',line= {"shape": 'hv'},
   mode= 'lines',type='scatter'))
-    fig.add_trace(go.Scatter(x=dist['Energy'],y=nonthermal_counts,name='non-thermal',line= {"shape": 'hv'},
+        fig.add_trace(go.Scatter(x=dist['Energy'],y=nonthermal_counts,name='non-thermal',line= {"shape": 'hv'},
   mode= 'lines',type='scatter'))
-    fig.add_trace(go.Scatter(x=dist['Energy'],y=prob,name='Total',line= {"shape": 'hv'},
+        fig.add_trace(go.Scatter(x=dist['Energy'],y=prob,name='Total',line= {"shape": 'hv'},
   mode= 'lines',type='scatter'))
+    else:
+        bins=np.logspace(0,3,num=15)
+        hist_nt=count_hist(genergy,nonthermal_counts,bins)
+        hist_th=count_hist(genergy,thermal_counts,bins)
+        hist_t=count_hist(genergy,prob,bins)
+        fig.add_trace(go.Scatter(x=bins,y=hist_th,name='thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+        fig.add_trace(go.Scatter(x=bins,y=hist_nt,name='non-thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+        fig.add_trace(go.Scatter(x=bins,y=hist_t,name='Total',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+    fig.update_layout(yaxis = dict(showexponent = 'all',exponentformat = 'e'))    
     fig.update_layout(title='Flare Counts',yaxis_type = 'log',xaxis_type='log',xaxis_range=[.5,2.5],xaxis_title='Energy (keV)',yaxis_range=[0,5],yaxis_title='Predicted Flare Counts')
 
     return fig
