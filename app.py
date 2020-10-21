@@ -44,7 +44,7 @@ def calc_transmission(a, rho, thickness):
     transmission = [np.exp(-1*x*thick*rho) for x in a]
     return transmission
 
-def get_transm(substrate,sthick,grating,gthick,attenuator,athick,detector,dthick):
+def get_transm(substrate,sthick,grating,gthick):#,attenuator,athick,detector,dthick):
     transm_dict={}
     gdata=pd.read_csv('data/'+grating+'.csv',sep=',',header=0)
     genergy=gdata['E (keV)']
@@ -70,46 +70,46 @@ def get_transm(substrate,sthick,grating,gthick,attenuator,athick,detector,dthick
         transm_dict['senergy']=genergy
         transm_dict['stransm']=np.ones(len(genergy))
 
-    if attenuator !="None":
-        adata=pd.read_csv('data/'+attenuator+'.csv',sep=',',header=0)
-        aenergy=adata['E (keV)']
-        #try to see if it's pre-calculated first
-        try:
-            atransm = adata['P(xi) (d='+athick+'000 um)']
-        except KeyError:
-            atransm=calc_transmission(adata['a (cm^2/g)'],adata['rho (g/cm^3)'][0],athick*1000)
-        transm_dict['aenergy']=aenergy
-        transm_dict['atransm']=atransm
-    else:
-        transm_dict['aenergy']=genergy
-        transm_dict['atransm']=np.ones(len(genergy))
+    #if attenuator !="None":
+    #    adata=pd.read_csv('data/'+attenuator+'.csv',sep=',',header=0)
+    #    aenergy=adata['E (keV)']
+    #    #try to see if it's pre-calculated first
+    #    try:
+    #        atransm = adata['P(xi) (d='+athick+'000 um)']
+    #    except KeyError:
+    #        atransm=calc_transmission(adata['a (cm^2/g)'],adata['rho (g/cm^3)'][0],athick*1000)
+    #    transm_dict['aenergy']=aenergy
+    #    transm_dict['atransm']=atransm
+    #else:
+    #    transm_dict['aenergy']=genergy
+    #    transm_dict['atransm']=np.ones(len(genergy))
 
-    if detector !="None":
-        ddata=pd.read_csv('data/'+detector+'.csv',sep=',',header=0)
-        denergy=ddata['E (keV)']
-        #try to see if it's pre-calculated first
-        try:
-            dtransm = ddata['P(xi) (d='+dthick+'000 um)']
-        except KeyError:
-            dtransm=calc_transmission(ddata['a (cm^2/g)'],ddata['rho (g/cm^3)'][0],dthick*1000)
-        transm_dict['denergy']=denergy
-        transm_dict['dtransm']=1.-dtransm
-    else:
-        transm_dict['denergy']=genergy
-        transm_dict['dtransm']=np.ones(len(genergy))
+    #if detector !="None":
+    #    ddata=pd.read_csv('data/'+detector+'.csv',sep=',',header=0)
+    #    denergy=ddata['E (keV)']
+    #    #try to see if it's pre-calculated first
+    #    try:
+    #        dtransm = ddata['P(xi) (d='+dthick+'000 um)']
+    #    except KeyError:
+    #        dtransm=calc_transmission(ddata['a (cm^2/g)'],ddata['rho (g/cm^3)'][0],dthick*1000)
+    #    transm_dict['denergy']=denergy
+    #    transm_dict['dtransm']=1.-dtransm
+    #else:
+    #    transm_dict['denergy']=genergy
+    #    transm_dict['dtransm']=np.ones(len(genergy))
 
     #interpolate everything to the same energy range
     evector = np.linspace(2.08, 433, num=400, endpoint=True) #check that this spans the correct rang
 
     sinterp=np.interp(evector,transm_dict['senergy'],transm_dict['stransm'])
     ginterp=np.interp(evector,transm_dict['genergy'],transm_dict['gtransm'])
-    ainterp=np.interp(evector,transm_dict['aenergy'],transm_dict['atransm'])
-    dinterp=np.interp(evector,transm_dict['denergy'],transm_dict['dtransm'])
+    #ainterp=np.interp(evector,transm_dict['aenergy'],transm_dict['atransm'])
+    #dinterp=np.interp(evector,transm_dict['denergy'],transm_dict['dtransm'])
     #        print(k,transm_dict[k+'energy'])
     #        print(k,transm_dict[k+'transm'])
 
     transm_dict['tenergy']=evector
-    transm_dict['ttransm']=(sinterp+ginterp)*ainterp*dinterp
+    transm_dict['ttransm']=(sinterp+ginterp)#*ainterp*dinterp
         #print(np.shape(transm_dict['tenergy']))
         #print(np.shape(transm_dict['ttransm']))
     return transm_dict
@@ -139,25 +139,25 @@ app.layout = html.Div(children=[
                 id='gthick',
                 options=[{'label': i+ ' microns', 'value': i} for i in grating_thickness],
                 value='250'
-            ),
-            html.H3("Attenuator"),
-            dcc.Dropdown(
-                id='attenuator',
-                options=[{'label': i, 'value': i} for i in attenuator_materials],
-                value='None'),
-            dcc.Dropdown(
-                id='athick',
-                options=[{'label': i + ' mm', 'value': i} for i in attenuator_thickness]
-            ),
-            html.H3("Detector"),
-            dcc.Dropdown(
-                id='detector',
-                options=[{'label': i, 'value': i} for i in detector_materials],
-                value='None'),
-            dcc.Dropdown(
-                id='dthick',
-                options=[{'label': i+' mm', 'value': i} for i in detector_thickness]
-            )
+            )#,
+            #html.H3("Attenuator"),
+            #dcc.Dropdown(
+            #    id='attenuator',
+            #    options=[{'label': i, 'value': i} for i in attenuator_materials],
+            #    value='None'),
+            #dcc.Dropdown(
+            #    id='athick',
+            #    options=[{'label': i + ' mm', 'value': i} for i in attenuator_thickness]
+            #),
+            #html.H3("Detector"),
+            #dcc.Dropdown(
+            #    id='detector',
+            #    options=[{'label': i, 'value': i} for i in detector_materials],
+            #    value='None'),
+            #dcc.Dropdown(
+            #    id='dthick',
+            #    options=[{'label': i+' mm', 'value': i} for i in detector_thickness]
+            #)
 
                     ],style={'height': '100%', 'display': 'inline-block'}),  # Define the left element
             html.Div(className='nine columns div-for-charts bg-grey',
@@ -169,9 +169,14 @@ app.layout = html.Div(children=[
     dcc.RadioItems(
         id='bin_type',
                 options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-                value='Linear',
+                value='Log',
                 labelStyle={'display': 'inline-block'}
-            )]),
+            ),
+        html.H3(children='Number of bins (1-500 keV)'),
+    dcc.Input(
+            id="nbins", type="text", placeholder='15',value=15
+        )
+        ]),
 
     html.Div(className='nine columns div-for-charts bg-grey',
             children =[dcc.Graph(id='flare_counts')],style={'height': '100%', 'display': 'inline-block'})
@@ -189,23 +194,24 @@ app.layout = html.Div(children=[
     Input('sthick', 'value'),
     Input('gratings', 'value'),
     Input('gthick', 'value'),
-    Input('attenuator', 'value'),
-    Input('athick', 'value'),
-    Input('detector', 'value'),
-    Input('dthick', 'value')])
+    #Input('attenuator', 'value'),
+    #Input('athick', 'value'),
+    #Input('detector', 'value'),
+    #Input('dthick', 'value')
+    ])
 
-def update_graph(substrate,sthick,gratings,gthick,attenuator,athick,detector,dthick):
+def update_graph(substrate,sthick,gratings,gthick):#,attenuator,athick,detector,dthick):
 
-    transm_dict=get_transm(substrate,sthick,gratings,gthick,attenuator,athick,detector,dthick)
+    transm_dict=get_transm(substrate,sthick,gratings,gthick)#,attenuator,athick,detector,dthick)
 
     fig = go.Figure()
     if substrate != 'None':
         fig.add_trace(go.Scatter(x=transm_dict['senergy'], y=transm_dict['stransm'], name='Substrate'))
     fig.add_trace(go.Scatter(x=transm_dict['genergy'], y=transm_dict['gtransm'], name='Gratings'))
-    if attenuator != 'None':
-        fig.add_trace(go.Scatter(x=transm_dict['aenergy'], y=transm_dict['atransm'], name='Attenuator'))
-    if detector != 'None':
-        fig.add_trace(go.Scatter(x=transm_dict['denergy'], y=transm_dict['dtransm'], name='Detector'))
+    #if attenuator != 'None':
+    #    fig.add_trace(go.Scatter(x=transm_dict['aenergy'], y=transm_dict['atransm'], name='Attenuator'))
+    #if detector != 'None':
+    #    fig.add_trace(go.Scatter(x=transm_dict['denergy'], y=transm_dict['dtransm'], name='Detector'))
     fig.add_trace(go.Scatter(x=transm_dict['tenergy'], y=transm_dict['ttransm'], name='Total'))
     fig.update_layout(yaxis = dict(showexponent = 'all',exponentformat = 'e'))
     fig.update_layout(title='Transmission',yaxis_type = 'log',xaxis_type='log',xaxis_range=[.5,2.5],xaxis_title='Energy (keV)',yaxis_range=[-3,0.1],yaxis_title='Percent Transmission')
@@ -219,45 +225,55 @@ def update_graph(substrate,sthick,gratings,gthick,attenuator,athick,detector,dth
 @app.callback(
     Output('flare_counts', 'figure'),
     [Input('bin_type', 'value'),
+    Input('nbins', 'value'),
     Input('substrate', 'value'),
     Input('sthick', 'value'),
     Input('gratings', 'value'),
     Input('gthick', 'value'),
-    Input('attenuator', 'value'),
-    Input('athick', 'value'),
-    Input('detector', 'value'),
-    Input('dthick', 'value')])
+    #Input('attenuator', 'value'),
+    #Input('athick', 'value'),
+    #Input('detector', 'value'),
+    #Input('dthick', 'value')
+    ])
 
-def update_graph(bin_type,substrate,sthick,gratings,gthick,attenuator,athick,detector,dthick):
-    transm_dict=get_transm(substrate,sthick,gratings,gthick,attenuator,athick,detector,dthick)
+def update_graph(bin_type,nbins,substrate,sthick,gratings,gthick):#,attenuator,athick,detector,dthick):
+    transm_dict=get_transm(substrate,sthick,gratings,gthick)#,attenuator,athick,detector,dthick)
     
     dist = pd.read_csv('data/flare_xr_dist.csv') #[energy, thermal part, non-thermal part]
     genergy=transm_dict['tenergy']
-    prob = np.interp(genergy,dist['Energy'],dist['Dist'])
+    #prob = np.interp(genergy,dist['Energy'],dist['Dist']) #what is this actually though?
     ntnt = np.interp(genergy,dist['Energy'],dist['NT'])
     thth = np.interp(genergy,dist['Energy'],dist['TH'])
+    #totalc=ntnt+thth
 
-    total_counts= prob*transm_dict['ttransm']
     thermal_counts= thth*transm_dict['ttransm']
     nonthermal_counts= ntnt*transm_dict['ttransm']
+    total_counts= thermal_counts+nonthermal_counts#totalc*transm_dict['ttransm']
+
     fig = go.Figure()
+
+    try:
+        nbins=int(nbins)
+    except ValueError:
+        nbins=15
     if bin_type =='Linear':
-        fig.add_trace(go.Scatter(x=dist['Energy'],y=thermal_counts,name='thermal',line= {"shape": 'hv'},
-  mode= 'lines',type='scatter'))
-        fig.add_trace(go.Scatter(x=dist['Energy'],y=nonthermal_counts,name='non-thermal',line= {"shape": 'hv'},
-  mode= 'lines',type='scatter'))
-        fig.add_trace(go.Scatter(x=dist['Energy'],y=prob,name='Total',line= {"shape": 'hv'},
-  mode= 'lines',type='scatter'))
-    else:
-        bins=np.logspace(0,3,num=15)
+        bins=np.linspace(1,500,num=nbins)
         hist_nt=count_hist(genergy,nonthermal_counts,bins)
         hist_th=count_hist(genergy,thermal_counts,bins)
-        hist_t=count_hist(genergy,prob,bins)
-        fig.add_trace(go.Scatter(x=bins,y=hist_th,name='thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
-        fig.add_trace(go.Scatter(x=bins,y=hist_nt,name='non-thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
-        fig.add_trace(go.Scatter(x=bins,y=hist_t,name='Total',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+        hist_t=count_hist(genergy,total_counts,bins)
+        #fig.add_trace(go.Scatter(x=dist['Energy'],y=thermal_counts,name='thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+        #fig.add_trace(go.Scatter(x=dist['Energy'],y=nonthermal_counts,name='non-thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+        #fig.add_trace(go.Scatter(x=dist['Energy'],y=totalc,name='Total',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+    else:
+        bins=np.logspace(0,np.log10(500),num=nbins)
+        hist_nt=count_hist(genergy,nonthermal_counts,bins)
+        hist_th=count_hist(genergy,thermal_counts,bins)
+        hist_t=count_hist(genergy,total_counts,bins)
+    fig.add_trace(go.Scatter(x=bins,y=hist_nt,name='thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+    fig.add_trace(go.Scatter(x=bins,y=hist_th,name='non-thermal',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
+    fig.add_trace(go.Scatter(x=bins,y=hist_t,name='Total',line= {"shape": 'hv'},  mode= 'lines',type='scatter'))
     fig.update_layout(yaxis = dict(showexponent = 'all',exponentformat = 'e'))    
-    fig.update_layout(title='Flare Counts',yaxis_type = 'log',xaxis_type='log',xaxis_range=[.5,2.5],xaxis_title='Energy (keV)',yaxis_range=[0,5],yaxis_title='Predicted Flare Counts')
+    fig.update_layout(title='Flare Counts',yaxis_type = 'log',xaxis_range=[0,150],xaxis_title='Energy (keV)',yaxis_range=[0,5],yaxis_title='Predicted Flare Counts')
 
     return fig
 
