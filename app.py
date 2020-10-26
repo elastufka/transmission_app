@@ -52,9 +52,9 @@ def get_transm(substrate,sthick,grating,gthick):#,attenuator,athick,detector,dth
     try:
         gtransm = gdata['P(xi) (d='+gthick+' um)']
     except KeyError:
-        gtransm=calc_transmission(gdata['a (cm^2/g)'],gdata['rho (g/cm^3)'][0],gthick)
+        gtransm=calc_transmission(gdata['a (cm^2/g)'],gdata['rho (g/cm^3)'][0],float(gthick))
     transm_dict['genergy']=genergy
-    transm_dict['gtransm']=gtransm*0.5
+    transm_dict['gtransm']=np.array(gtransm)*0.5
     
     if substrate !="None":
         sdata=pd.read_csv('data/'+substrate+'.csv',sep=',',header=0)
@@ -63,7 +63,7 @@ def get_transm(substrate,sthick,grating,gthick):#,attenuator,athick,detector,dth
         try:
             stransm = sdata['P(xi) (d='+sthick+' um)']
         except KeyError:
-            stransm=calc_transmission(sdata['a (cm^2/g)'],sdata['rho (g/cm^3)'][0],sthick)
+            stransm=calc_transmission(sdata['a (cm^2/g)'],sdata['rho (g/cm^3)'][0],float(sthick))
         transm_dict['senergy']=senergy
         transm_dict['stransm']=np.array(stransm)*0.5
     else:
@@ -130,6 +130,10 @@ app.layout = html.Div(children=[
                 options=[{'label': i + ' microns', 'value': i} for i in substrate_thickness],
                 value='1000'
             ),
+            html.P(children='Or enter a value'),
+        dcc.Input(
+            id="sthick_free", type="text",debounce=True
+        ),
             html.H3("Gratings"),
             dcc.Dropdown(
                 id='gratings',
@@ -139,7 +143,11 @@ app.layout = html.Div(children=[
                 id='gthick',
                 options=[{'label': i+ ' microns', 'value': i} for i in grating_thickness],
                 value='250'
-            )#,
+            ),
+             html.P(children='Or enter a value'),
+        dcc.Input(
+            id="gthick_free", type="text",debounce=True
+        )
             #html.H3("Attenuator"),
             #dcc.Dropdown(
             #    id='attenuator',
@@ -174,7 +182,7 @@ app.layout = html.Div(children=[
             ),
         html.H3(children='Number of bins (1-500 keV)'),
     dcc.Input(
-            id="nbins", type="text", placeholder='15',value=15
+            id="nbins", type="text", placeholder='15',value=15,debounce=True
         )
         ]),
 
@@ -194,13 +202,19 @@ app.layout = html.Div(children=[
     Input('sthick', 'value'),
     Input('gratings', 'value'),
     Input('gthick', 'value'),
+    Input('sthick_free', 'value'),
+    Input('gthick_free', 'value'),
     #Input('attenuator', 'value'),
     #Input('athick', 'value'),
     #Input('detector', 'value'),
     #Input('dthick', 'value')
     ])
 
-def update_graph(substrate,sthick,gratings,gthick):#,attenuator,athick,detector,dthick):
+def update_graph(substrate,sthick,gratings,gthick,sthick_free,gthick_free):#,attenuator,athick,detector,dthick):
+    if sthick_free != None:
+        sthick=sthick_free
+    if gthick_free != None:
+        gthick=gthick_free
 
     transm_dict=get_transm(substrate,sthick,gratings,gthick)#,attenuator,athick,detector,dthick)
 
